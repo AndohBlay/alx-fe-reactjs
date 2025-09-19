@@ -2,44 +2,68 @@ import { create } from 'zustand';
 
 export const useRecipeStore = create((set, get) => ({
   recipes: [],
-  searchTerm: '',
   filteredRecipes: [],
+  searchTerm: '',
+  favorites: [],
+  recommendations: [],
 
   addRecipe: (newRecipe) => {
-    const updatedRecipes = [...get().recipes, newRecipe];
-    set({ recipes: updatedRecipes });
-    get().filterRecipes(); // re-filter after adding
+    const updated = [...get().recipes, newRecipe];
+    set({ recipes: updated });
+    get().filterRecipes();
   },
 
   updateRecipe: (updatedRecipe) => {
-    const updatedRecipes = get().recipes.map((recipe) =>
-      recipe.id === updatedRecipe.id ? updatedRecipe : recipe
+    const updated = get().recipes.map((r) =>
+      r.id === updatedRecipe.id ? updatedRecipe : r
     );
-    set({ recipes: updatedRecipes });
-    get().filterRecipes(); // re-filter after update
+    set({ recipes: updated });
+    get().filterRecipes();
   },
 
   deleteRecipe: (id) => {
-    const updatedRecipes = get().recipes.filter((recipe) => recipe.id !== id);
-    set({ recipes: updatedRecipes });
-    get().filterRecipes(); 
+    const updated = get().recipes.filter((r) => r.id !== id);
+    set({ recipes: updated });
+    get().filterRecipes();
+    set((state) => ({
+      favorites: state.favorites.filter((fid) => fid !== id),
+    }));
   },
 
   setSearchTerm: (term) => {
     set({ searchTerm: term });
-    get().filterRecipes(); 
+    get().filterRecipes();
   },
 
   filterRecipes: () => {
     const { recipes, searchTerm } = get();
-    const filtered = recipes.filter((recipe) =>
-      recipe.title.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = recipes.filter((r) =>
+      r.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
     set({ filteredRecipes: filtered });
   },
 
-  setRecipes: (recipes) => {
-    set({ recipes });
-    get().filterRecipes();
+  // ✅ FAVORITES
+  addFavorite: (id) =>
+    set((state) => ({
+      favorites: [...state.favorites, id],
+    })),
+
+  removeFavorite: (id) =>
+    set((state) => ({
+      favorites: state.favorites.filter((fid) => fid !== id),
+    })),
+
+  isFavorite: (id) => get().favorites.includes(id),
+
+  // ✅ RECOMMENDATIONS
+  generateRecommendations: () => {
+    const { recipes, favorites } = get();
+    // 🔁 Mock: randomly suggest from favorites
+    const recommended = recipes.filter(
+      (r) =>
+        favorites.includes(r.id) && Math.random() > 0.4 // ~60% chance
+    );
+    set({ recommendations: recommended });
   },
 }));
